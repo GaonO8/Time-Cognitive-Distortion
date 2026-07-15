@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>숏폼 시간왜곡 실험</title>
+<style>
+  :root{ --bg:#0B0D10; --panel:#15181D; --panel-2:#1D2128; --line:#262B33; --text:#EDEFF2; --muted:#8A93A3; --accent:#2DD4BF; --warn:#E8735C; }
+  *{box-sizing:border-box;}
+  html,body{ margin:0; padding:0; height:100%; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    -webkit-tap-highlight-color:transparent; overscroll-behavior:none; }
+  #app{ height:100vh; height:100dvh; width:100vw; position:relative; overflow:hidden; }
+  .screen{ position:absolute; inset:0; display:none; flex-direction:column; animation:fadeIn .25s ease; }
+  .screen.active{ display:flex; }
+  @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+
+  .wrap{ flex:1; overflow-y:auto; padding:32px 22px 100px; max-width:480px; margin:0 auto; width:100%; }
+  .eyebrow{ font-size:12px; letter-spacing:.12em; color:var(--accent); text-transform:uppercase; font-weight:700; margin-bottom:8px; }
+  h1{ font-size:23px; margin:0 0 6px; font-weight:800; letter-spacing:-.01em; }
+  .sub{ color:var(--muted); font-size:14px; line-height:1.6; margin:0 0 28px; }
+  .field{ margin-bottom:20px; }
+  .field label{ display:block; font-size:13px; color:var(--muted); margin-bottom:8px; font-weight:600; }
+  input[type="text"], input[type="number"]{ width:100%; background:var(--panel); border:1px solid var(--line); color:var(--text);
+    padding:13px 14px; border-radius:10px; font-size:15px; outline:none; }
+  input:focus{ border-color:var(--accent); }
+  .footer-bar{ position:absolute; bottom:0; left:0; right:0; padding:14px 20px calc(14px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg,transparent,var(--bg) 30%); display:flex; justify-content:center; }
+  .btn{ border:none; border-radius:999px; padding:15px 26px; font-size:15px; font-weight:800; cursor:pointer;
+    background:var(--accent); color:#06201C; width:100%; max-width:440px; }
+  .btn:disabled{ background:var(--panel-2); color:var(--muted); cursor:not-allowed; }
+  .btn.ghost{ background:transparent; border:1.5px solid var(--line); color:var(--text); }
+  .btn.small{ padding:10px 16px; font-size:13px; width:auto; }
+
+  .mode-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .mode-card{ background:var(--panel); border:1.5px solid var(--line); border-radius:12px; padding:14px; cursor:pointer; }
+  .mode-card.selected{ border-color:var(--accent); background:linear-gradient(180deg, rgba(45,212,191,.10), rgba(45,212,191,.02)); }
+  .mode-card .name{ font-weight:700; font-size:14px; margin-bottom:3px; }
+  .mode-card .desc{ font-size:12px; color:var(--muted); line-height:1.4; }
+
+  .center-wrap{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px; text-align:center; }
+  .center-wrap h2{ font-size:19px; margin:0 0 12px; }
+  .center-wrap p{ color:var(--muted); font-size:14px; line-height:1.7; max-width:320px; margin:0 0 8px; }
+  .badge{ background:var(--panel); border:1px solid var(--line); color:var(--accent); font-size:12px; padding:5px 14px; border-radius:999px; margin-bottom:18px; font-weight:700; }
+
+  #viewing{ background:#000; }
+  .scroll-feed{ height:100%; width:100%; overflow-y:scroll; scroll-snap-type:y mandatory; scrollbar-width:none; }
+  .scroll-feed::-webkit-scrollbar{ display:none; }
+  .feed-item{ height:100%; width:100%; scroll-snap-align:start; position:relative; display:flex; align-items:center; justify-content:center; }
+  .feed-item video{ width:100%; height:100%; object-fit:cover; }
+  .end-btn{ position:absolute; top:calc(14px + env(safe-area-inset-top)); right:14px;
+    background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.18); color:rgba(255,255,255,.8);
+    padding:8px 14px; border-radius:999px; font-size:12px; cursor:pointer; z-index:5; }
+
+  .q{ margin-bottom:24px; }
+  .q .qtext{ font-size:14.5px; margin-bottom:10px; font-weight:700; line-height:1.5; }
+  .radio-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .radio-pill{ border:1.5px solid var(--line); background:var(--panel); color:var(--text); padding:9px 14px; border-radius:999px; font-size:13px; cursor:pointer; }
+  .radio-pill.selected{ border-color:var(--accent); background:rgba(45,212,191,.12); color:var(--accent); }
+  .num-input-row{ display:flex; align-items:center; gap:8px; }
+  .num-input-row input{ width:100px; }
+  .num-input-row span{ color:var(--muted); font-size:13px; }
+
+  .stat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:18px 0 22px; }
+  .stat-card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px; }
+  .stat-card .label{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
+  .stat-card .value{ font-size:22px; font-weight:800; color:var(--accent); }
+  .stat-card .value.warn{ color:var(--warn); }
+  table{ width:100%; border-collapse:collapse; font-size:12px; margin-top:8px; }
+  th,td{ text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  th{ color:var(--muted); font-weight:700; font-size:11px; text-transform:uppercase; }
+  .table-wrap{ overflow-x:auto; border:1px solid var(--line); border-radius:12px; padding:4px 8px; }
+  .btn-row{ display:flex; gap:8px; margin-top:18px; }
+  .hint{ font-size:12px; color:var(--muted); margin-top:10px; line-height:1.6; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="screen active" id="setup">
+    <div class="wrap">
+      <div class="eyebrow">온라인 클라우드형</div>
+      <h1>숏폼 시간왜곡 실험</h1>
+      <p class="sub">참가자 ID를 적고 시작 버튼을 누르면 영상이 바로 재생됩니다.</p>
+      
+      <div class="field">
+        <label>참가자 ID</label>
+        <input type="text" id="participantId" placeholder="예: A1">
+      </div>
+
+      <div class="field">
+        <label>영상 세트 선택</label>
+        <div class="mode-grid">
+          <div class="mode-card selected" data-set="1" id="card-set1">
+            <div class="name">세트 1</div>
+            <div class="desc">1번 ~ 20번 영상</div>
+          </div>
+          <div class="mode-card" data-set="2" id="card-set2">
+            <div class="name">세트 2</div>
+            <div class="desc">21번 ~ 40번 영상</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bar">
+      <button class="btn" id="goInstruction" disabled>시작</button>
+    </div>
+  </div>
+
+  <div class="screen" id="instruction">
+    <div class="center-wrap">
+      <div class="badge">스크롤형</div>
+      <h2>기기를 참가자에게 건네주세요</h2>
+      <p>화면이 영상으로 가득 차고, 시계나 진행 표시가 보이지 않습니다.</p>
+      <p>편하게 스크롤하며 보다가, <b>충분히 봤다고 느껴지면</b> 화면 우측 상단의 작은 버튼을 눌러 종료해주세요.</p>
+    </div>
+    <div class="footer-bar">
+      <button class="btn" id="startViewing">시청 시작</button>
+    </div>
+  </div>
+
+  <div class="screen" id="viewing">
+    <button class="end-btn" id="endBtn">종료</button>
+    <div class="scroll-feed" id="scrollFeed"></div>
+  </div>
+
+  <div class="screen" id="survey">
+    <div class="wrap">
+      <div class="eyebrow">시청 직후 응답</div>
+      <h1 style="margin-bottom:22px;">체감시간 설문</h1>
+      <div class="q">
+        <div class="qtext">1. 방금 영상을 몇 분 동안 봤다고 느끼셨나요?</div>
+        <div class="num-input-row"><input type="number" id="perceivedMin" min="0" step="0.5" placeholder="예: 7"><span>분</span></div>
+      </div>
+      <div class="q">
+        <div class="qtext">2. 실제보다 어떻게 느껴졌나요?</div>
+        <div class="radio-row" data-q="direction">
+          <div class="radio-pill" data-val="1">훨씬 짧게</div><div class="radio-pill" data-val="2">약간 짧게</div>
+          <div class="radio-pill" data-val="3">비슷하게</div><div class="radio-pill" data-val="4">약간 길게</div><div class="radio-pill" data-val="5">훨씬 길게</div>
+        </div>
+      </div>
+      <div class="q">
+        <div class="qtext">3. 시청 중 시계를 확인한 적이 있나요?</div>
+        <div class="radio-row" data-q="checkedClock"><div class="radio-pill" data-val="no">아니오</div><div class="radio-pill" data-val="yes">예</div></div>
+      </div>
+      <div class="q"><div class="qtext">4. 플로우 상태 체크 (해당할수록 오른쪽)</div><div id="flowQs"></div></div>
+    </div>
+    <div class="footer-bar"><button class="btn" id="submitSurvey" disabled>제출하고 결과 보기</button></div>
+  </div>
+
+  <div class="screen" id="results">
+    <div class="wrap" style="padding-bottom:40px;">
+      <div class="eyebrow">연구자용 화면</div>
+      <h1>누적 결과</h1>
+      <div class="stat-grid" id="statGrid"></div>
+      <div class="table-wrap"><table id="resultsTable">
+        <thead><tr><th>ID</th><th>세트</th><th>실제(초)</th><th>체감(분)</th><th>왜곡률</th><th>Flow점수</th></tr></thead>
+        <tbody id="resultsBody"></tbody>
+      </table></div>
+      <div class="btn-row">
+        <button class="btn ghost small" id="downloadCsv">CSV로 내려받기</button>
+        <button class="btn ghost small" id="copyResultText">결과 텍스트 복사</button>
+        <button class="btn ghost small" id="newSession">다음 참가자 시작</button>
+      </div>
+      <div class="hint" id="storageHint"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  // 가온님이 변환해주신 실제 Catbox 동영상 주소 매핑
+  const SET1_URLS = [
+    "https://files.catbox.moe/ul30vf", // 1. 고양이
+    "https://files.catbox.moe/u2oklz", // 2. 김치항정파스타 먹방
+    "https://files.catbox.moe/o6fmyl", // 3. 패션 트렌드
+    "https://files.catbox.moe/6oswzl", // 4. 라푼젤 헤어스타일하는 법
+    "https://files.catbox.moe/3k9p2j", // 5. 민음사
+    "https://files.catbox.moe/gf464l", // 6. 갸루
+    "https://files.catbox.moe/t61838", // 7. 무한도전
+    "https://files.catbox.moe/pc5zgz", // 8. 알바 공감
+    "https://files.catbox.moe/l85hgz", // 9. 첼로
+    "https://files.catbox.moe/c15pp8", // 10. 각운동량
+    "https://files.catbox.moe/e36x0i", // 11. 소시지
+    "https://files.catbox.moe/y72kz7", // 12. 강아지 산신령
+    "https://files.catbox.moe/e1542p", // 13. 호르무즈 봉쇄
+    "https://files.catbox.moe/8cw2tf", // 14. 초코식빵
+    "https://files.catbox.moe/gmu547", // 15. SNL
+    "https://files.catbox.moe/9yw3xo", // 16. 스트레칭
+    "https://files.catbox.moe/vw22jr", // 17. 향아치
+    "https://files.catbox.moe/cycpwn", // 18. 면접
+    "https://files.catbox.moe/8i3ndc", // 19. 자취꿀템
+    "https://files.catbox.moe/s00f2s"  // 20. 유리 공예
+  ];
+  
+  const SET2_URLS = [
+    "https://files.catbox.moe/nyrhka", // 1. 시골 강아지
+    "https://files.catbox.moe/4z9pd7", // 2. 마라탕, 꿔바로우 먹방
+    "https://files.catbox.moe/yx2c64", // 3. 다이소 뷰티 추천템
+    "https://files.catbox.moe/y0hkfr", // 4. 공예 ASMR
+    "https://files.catbox.moe/i4dzrs", // 5. 영화
+    "https://files.catbox.moe/00fggc", // 6. 미녀
+    "https://files.catbox.moe/tf3eyu", // 7. 스텐드업 코미디
+    "https://files.catbox.moe/1bk2mz", // 8. 전단지 피하는 법
+    "https://files.catbox.moe/fu49pi", // 9. 오펠리아
+    "https://files.catbox.moe/5ml1fe", // 10. 화학 실험
+    "https://files.catbox.moe/qiovpj", // 11. 정승제카레
+    "https://files.catbox.moe/m03r84", // 12. 동물 애니
+    "https://files.catbox.moe/mt8hmc", // 13. 늙크크
+    "https://files.catbox.moe/k8hjl9", // 14. 홈파티
+    "https://files.catbox.moe/1haawe", // 15. 헬스
+    "https://files.catbox.moe/8fltxb", // 16. 몽중다과
+    "https://files.catbox.moe/lc98jc", // 17. 해외 TV쇼
+    "https://files.catbox.moe/2ab6j7", // 18. 크레이프 케이크 먹방
+    "https://files.catbox.moe/vtn0ng", // 19. 햄스터
+    "https://files.catbox.moe/mgkpq2"  // 20. 최고의 아침식사
+  ];
+
+  const MODE = "scroll_online";
+  let currentSet = "1";
+  const STORAGE_PREFIX = "results:" + MODE + ":";
+
+  let videos = [];
+  let sessionStartTs = null, sessionEndTs = null;
+  let localResults = [];
+  const flowStatements = [
+    "영상을 보는 동안 다른 생각이 거의 나지 않았다",
+    "지금 몇 시인지, 얼마나 지났는지 신경 쓰이지 않았다",
+    "다음 영상이 무엇이 나올지 계속 궁금했다",
+    "그만 봐야겠다는 생각이 잘 들지 않았다",
+    "화면을 넘기는 행동이 거의 무의식적으로 느껴졌다"
+  ];
+  let flowAnswers = new Array(flowStatements.length).fill(null);
+  let surveyAnswers = { direction:null, checkedClock:null };
+
+  const screens = {};
+  document.querySelectorAll(".screen").forEach(s => screens[s.id] = s);
+  function show(id){ Object.values(screens).forEach(s=>s.classList.remove("active")); screens[id].classList.add("active"); }
+
+  function loadVideosForSet(setNum){
+    const urls = setNum === "1" ? SET1_URLS : SET2_URLS;
+    videos = urls.map((u,i) => ({ url:u, name:"video "+(i+1) }));
+    updateGoButton();
+  }
+
+  document.getElementById("card-set1").addEventListener("click", () => {
+    currentSet = "1";
+    document.getElementById("card-set1").classList.add("selected");
+    document.getElementById("card-set2").classList.remove("selected");
+    loadVideosForSet(currentSet);
+  });
+  document.getElementById("card-set2").addEventListener("click", () => {
+    currentSet = "2";
+    document.getElementById("card-set2").classList.add("selected");
+    document.getElementById("card-set1").classList.remove("selected");
+    loadVideosForSet(currentSet);
+  });
+
+  loadVideosForSet(currentSet);
+
+  function updateGoButton(){
+    const pid = document.getElementById("participantId").value.trim();
+    document.getElementById("goInstruction").disabled = !(videos.length >= 1 && pid.length > 0);
+  }
+  document.getElementById("participantId").addEventListener("input", updateGoButton);
+
+  document.getElementById("goInstruction").addEventListener("click", () => show("instruction"));
+
+  document.getElementById("startViewing").addEventListener("click", () => {
+    buildViewer();
+    show("viewing");
+    sessionStartTs = Date.now();
+    const el = document.documentElement;
+    if (el.requestFullscreen) el.requestFullscreen().catch(()=>{});
+  });
+
+  function buildViewer(){
+    const feed = document.getElementById("scrollFeed");
+    feed.innerHTML = "";
+    videos.forEach(v => {
+      const item = document.createElement("div");
+      item.className = "feed-item";
+      const vid = document.createElement("video");
+      vid.src = v.url; vid.loop = true; vid.muted = true; vid.playsInline = true; vid.setAttribute("playsinline","");
+      item.appendChild(vid);
+      feed.appendChild(item);
+    });
+    const items = feed.querySelectorAll(".feed-item video");
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(en => {
+        const v = en.target;
+        if (en.isIntersecting && en.intersectionRatio > 0.6){ v.currentTime = 0; v.play().catch(()=>{}); }
+        else v.pause();
+      });
+    }, { threshold:[0,0.6,1] });
+    items.forEach(v => io.observe(v));
+    if (items[0]) items[0].play().catch(()=>{});
+  }
+
+  document.getElementById("endBtn").addEventListener("click", () => {
+    sessionEndTs = Date.now();
+    document.querySelectorAll("video").forEach(v => v.pause());
+    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+    buildSurvey();
+    show("survey");
+  });
+
+  function buildSurvey(){
+    document.getElementById("perceivedMin").value = "";
+    surveyAnswers = { direction:null, checkedClock:null };
+    flowAnswers = new Array(flowStatements.length).fill(null);
+    document.querySelectorAll('.radio-row[data-q] .radio-pill').forEach(p => p.classList.remove("selected"));
+    const flowWrap = document.getElementById("flowQs");
+    flowWrap.innerHTML = "";
+    flowStatements.forEach((text, qi) => {
+      const q = document.createElement("div");
+      q.style.marginBottom = "16px";
+      q.innerHTML = `<div style="font-size:13px;margin-bottom:8px;line-height:1.5;">${qi+1}) ${text}</div>
+        <div class="radio-row" data-flow="${qi}">${[1,2,3,4,5].map(n=>`<div class="radio-pill" data-val="${n}">${n}</div>`).join("")}</div>`;
+      flowWrap.appendChild(q);
+    });
+    document.querySelectorAll('.radio-row[data-q]').forEach(row => {
+      row.querySelectorAll(".radio-pill").forEach(pill => pill.addEventListener("click", () => {
+        row.querySelectorAll(".radio-pill").forEach(p=>p.classList.remove("selected"));
+        pill.classList.add("selected");
+        surveyAnswers[row.dataset.q] = pill.dataset.val;
+        checkSurveyComplete();
+      }));
+    });
+    document.querySelectorAll('.radio-row[data-flow]').forEach(row => {
+      row.querySelectorAll(".radio-pill").forEach(pill => pill.addEventListener("click", () => {
+        row.querySelectorAll(".radio-pill").forEach(p=>p.classList.remove("selected"));
+        pill.classList.add("selected");
+        flowAnswers[parseInt(row.dataset.flow)] = parseInt(pill.dataset.val);
+        checkSurveyComplete();
+      }));
+    });
+    document.getElementById("perceivedMin").addEventListener("input", checkSurveyComplete);
+  }
+
+  function checkSurveyComplete(){
+    const min = document.getElementById("perceivedMin").value;
+    const ok = min !== "" && surveyAnswers.direction && surveyAnswers.checkedClock && flowAnswers.every(a=>a!==null);
+    document.getElementById("submitSurvey").disabled = !ok;
+  }
+
+  document.getElementById("submitSurvey").addEventListener("click", () => {
+    const actualSec = (sessionEndTs - sessionStartTs) / 1000;
+    const perceivedMin = parseFloat(document.getElementById("perceivedMin").value);
+    const perceivedSec = perceivedMin * 60;
+    const distortionPct = ((perceivedSec - actualSec) / actualSec) * 100;
+    const flowScore = flowAnswers.reduce((a,b)=>a+b, 0);
+    const result = {
+      id: document.getElementById("participantId").value.trim(),
+      set: currentSet,
+      actualSec: actualSec.toFixed(1),
+      perceivedMin: perceivedMin,
+      distortionPct: distortionPct.toFixed(1),
+      direction: surveyAnswers.direction,
+      checkedClock: surveyAnswers.checkedClock,
+      flowScore: flowScore,
+      timestamp: new Date().toLocaleString()
+    };
+    localResults.push(result);
+    localStorage.setItem(STORAGE_PREFIX + Date.now(), JSON.stringify(result));
+    renderResults(result);
+    show("results");
+  });
+
+  function loadAllStoredResults(){
+    const items = [];
+    for(let i=0; i<localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(k.startsWith(STORAGE_PREFIX)){
+        try{ items.push(JSON.parse(localStorage.getItem(k))); }catch(e){}
+      }
+    }
+    items.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+    return items;
+  }
+
+  function renderResults(last){
+    const grid = document.getElementById("statGrid");
+    grid.innerHTML = `
+      <div class="stat-card"><div class="label">실제 시청시간</div><div class="value">${last.actualSec}초</div></div>
+      <div class="stat-card"><div class="label">체감 시간</div><div class="value">${last.perceivedMin}분</div></div>
+      <div class="stat-card"><div class="label">왜곡률</div><div class="value ${Math.abs(last.distortionPct)>30?'warn':''}">${last.distortionPct}%</div></div>
+      <div class="stat-card"><div class="label">Flow 점수</div><div class="value">${last.flowScore}</div></div>
+    `;
+    const all = loadAllStoredResults();
+    window.__allResults = all;
+    const body = document.getElementById("resultsBody");
+    body.innerHTML = all.map(r => `<tr><td>${r.id}</td><td>세트${r.set}</td><td>${r.actualSec}</td><td>${r.perceivedMin}</td><td>${r.distortionPct}%</td><td>${r.flowScore}</td></tr>`).join("");
+    document.getElementById("storageHint").textContent = "데이터가 이 기기 브라우저에 안전하게 누적 기록되고 있습니다.";
+  }
+
+  document.getElementById("downloadCsv").addEventListener("click", () => {
+    const all = window.__allResults || localResults;
+    const headers = ["participant_id","set","actual_sec","perceived_min","distortion_pct","direction_1to5","checked_clock","flow_score","timestamp"];
+    const rows = all.map(r => [r.id,r.set,r.actualSec,r.perceivedMin,r.distortionPct,r.direction,r.checkedClock,r.flowScore,r.timestamp]);
+    const csv = [headers.join(","), ...rows.map(r=>r.join(","))].join("\n");
+    const blob = new Blob(["\uFEFF"+csv], { type:"text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href=url; a.download="experiment_results.csv"; a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById("copyResultText").addEventListener("click", () => {
+    const all = window.__allResults || localResults;
+    const last = all[all.length - 1];
+    if(!last) return;
+    const txt = `[실험결과] ID:${last.id} | 세트:${last.set} | 실제시청:${last.actualSec}초 | 체감시청:${last.perceivedMin}분 | 왜곡률:${last.distortionPct}% | Flow:${last.flowScore}`;
+    navigator.clipboard.writeText(txt).then(() => {
+      alert("마지막 참가자 결과가 클립보드에 복사되었습니다! 카톡이나 메모장에 붙여넣으세요.");
+    });
+  });
+
+  document.getElementById("newSession").addEventListener("click", () => {
+    document.getElementById("participantId").value = "";
+    updateGoButton();
+    show("setup");
+  });
+})();
+</script>
+</body>
+</html>
