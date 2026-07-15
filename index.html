@@ -112,7 +112,7 @@
       <div class="badge">스크롤형</div>
       <h2>기기를 참가자에게 건네주세요</h2>
       <p>화면이 영상으로 가득 차고, 시계나 진행 표시가 보이지 않습니다.</p>
-      <p>편하게 스크롤하며 보다가, <b>충분히 봤다고 느껴지면</b> 화면 우측 상단의 작은 버튼을 눌러 종료해주세요.</p>
+      <p>편하게 스크롤하며 보다가, <b>진행자의 안내에 따라</b> 화면 우측 상단의 작은 버튼을 눌러 종료해주세요.</p>
     </div>
     <div class="footer-bar">
       <button class="btn" id="startViewing">시청 시작</button>
@@ -170,51 +170,51 @@
 
 <script>
 (function(){
-  // 가온님이 변환해주신 실제 Catbox 동영상 주소 매핑
+  // 모든 캣박스 주소 뒤에 확장자 .mp4를 완벽히 붙였습니다.
   const SET1_URLS = [
-    "https://files.catbox.moe/ul30vf", // 1. 고양이
-    "https://files.catbox.moe/u2oklz", // 2. 김치항정파스타 먹방
-    "https://files.catbox.moe/o6fmyl", // 3. 패션 트렌드
-    "https://files.catbox.moe/6oswzl", // 4. 라푼젤 헤어스타일하는 법
-    "https://files.catbox.moe/3k9p2j", // 5. 민음사
-    "https://files.catbox.moe/gf464l", // 6. 갸루
-    "https://files.catbox.moe/t61838", // 7. 무한도전
-    "https://files.catbox.moe/pc5zgz", // 8. 알바 공감
-    "https://files.catbox.moe/l85hgz", // 9. 첼로
-    "https://files.catbox.moe/c15pp8", // 10. 각운동량
-    "https://files.catbox.moe/e36x0i", // 11. 소시지
-    "https://files.catbox.moe/y72kz7", // 12. 강아지 산신령
-    "https://files.catbox.moe/e1542p", // 13. 호르무즈 봉쇄
-    "https://files.catbox.moe/8cw2tf", // 14. 초코식빵
-    "https://files.catbox.moe/gmu547", // 15. SNL
-    "https://files.catbox.moe/9yw3xo", // 16. 스트레칭
-    "https://files.catbox.moe/vw22jr", // 17. 향아치
-    "https://files.catbox.moe/cycpwn", // 18. 면접
-    "https://files.catbox.moe/8i3ndc", // 19. 자취꿀템
-    "https://files.catbox.moe/s00f2s"  // 20. 유리 공예
+    "https://files.catbox.moe/ul30vf.mp4", // 1. 고양이
+    "https://files.catbox.moe/u2oklz.mp4", // 2. 김치항정파스타 먹방
+    "https://files.catbox.moe/o6fmyl.mp4", // 3. 패션 트렌드
+    "https://files.catbox.moe/6oswzl.mp4", // 4. 라푼젤 헤어스타일하는 법
+    "https://files.catbox.moe/3k9p2j.mp4", // 5. 민음사
+    "https://files.catbox.moe/gf464l.mp4", // 6. 갸루
+    "https://files.catbox.moe/t61838.mp4", // 7. 무한도전
+    "https://files.catbox.moe/pc5zgz.mp4", // 8. 알바 공감
+    "https://files.catbox.moe/l85hgz.mp4", // 9. 첼로
+    "https://files.catbox.moe/c15pp8.mp4", // 10. 각운동량
+    "https://files.catbox.moe/e36x0i.mp4", // 11. 소시지
+    "https://files.catbox.moe/y72kz7.mp4", // 12. 강아지 산신령
+    "https://files.catbox.moe/e1542p.mp4", // 13. 호르무즈 봉쇄
+    "https://files.catbox.moe/8cw2tf.mp4", // 14. 초코식빵
+    "https://files.catbox.moe/gmu547.mp4", // 15. SNL
+    "https://files.catbox.moe/9yw3xo.mp4", // 16. 스트레칭
+    "https://files.catbox.moe/vw22jr.mp4", // 17. 향아치
+    "https://files.catbox.moe/cycpwn.mp4", // 18. 면접
+    "https://files.catbox.moe/8i3ndc.mp4", // 19. 자취꿀템
+    "https://files.catbox.moe/s00f2s.mp4"  // 20. 유리 공예
   ];
   
   const SET2_URLS = [
-    "https://files.catbox.moe/nyrhka", // 1. 시골 강아지
-    "https://files.catbox.moe/4z9pd7", // 2. 마라탕, 꿔바로우 먹방
-    "https://files.catbox.moe/yx2c64", // 3. 다이소 뷰티 추천템
-    "https://files.catbox.moe/y0hkfr", // 4. 공예 ASMR
-    "https://files.catbox.moe/i4dzrs", // 5. 영화
-    "https://files.catbox.moe/00fggc", // 6. 미녀
-    "https://files.catbox.moe/tf3eyu", // 7. 스텐드업 코미디
-    "https://files.catbox.moe/1bk2mz", // 8. 전단지 피하는 법
-    "https://files.catbox.moe/fu49pi", // 9. 오펠리아
-    "https://files.catbox.moe/5ml1fe", // 10. 화학 실험
-    "https://files.catbox.moe/qiovpj", // 11. 정승제카레
-    "https://files.catbox.moe/m03r84", // 12. 동물 애니
-    "https://files.catbox.moe/mt8hmc", // 13. 늙크크
-    "https://files.catbox.moe/k8hjl9", // 14. 홈파티
-    "https://files.catbox.moe/1haawe", // 15. 헬스
-    "https://files.catbox.moe/8fltxb", // 16. 몽중다과
-    "https://files.catbox.moe/lc98jc", // 17. 해외 TV쇼
-    "https://files.catbox.moe/2ab6j7", // 18. 크레이프 케이크 먹방
-    "https://files.catbox.moe/vtn0ng", // 19. 햄스터
-    "https://files.catbox.moe/mgkpq2"  // 20. 최고의 아침식사
+    "https://files.catbox.moe/nyrhka.mp4", // 1. 시골 강아지
+    "https://files.catbox.moe/4z9pd7.mp4", // 2. 마라탕, 꿔바로우 먹방
+    "https://files.catbox.moe/yx2c64.mp4", // 3. 다이소 뷰티 추천템
+    "https://files.catbox.moe/y0hkfr.mp4", // 4. 공예 ASMR
+    "https://files.catbox.moe/i4dzrs.mp4", // 5. 영화
+    "https://files.catbox.moe/00fggc.mp4", // 6. 미녀
+    "https://files.catbox.moe/tf3eyu.mp4", // 7. 스텐드업 코미디
+    "https://files.catbox.moe/1bk2mz.mp4", // 8. 전단지 피하는 법
+    "https://files.catbox.moe/fu49pi.mp4", // 9. 오펠리아
+    "https://files.catbox.moe/5ml1fe.mp4", // 10. 화학 실험
+    "https://files.catbox.moe/qiovpj.mp4", // 11. 정승제카레
+    "https://files.catbox.moe/m03r84.mp4", // 12. 동물 애니
+    "https://files.catbox.moe/mt8hmc.mp4", // 13. 늙크크
+    "https://files.catbox.moe/k8hjl9.mp4", // 14. 홈파티
+    "https://files.catbox.moe/1haawe.mp4", // 15. 헬스
+    "https://files.catbox.moe/8fltxb.mp4", // 16. 몽중다과
+    "https://files.catbox.moe/lc98jc.mp4", // 17. 해외 TV쇼
+    "https://files.catbox.moe/2ab6j7.mp4", // 18. 크레이프 케이크 먹방
+    "https://files.catbox.moe/vtn0ng.mp4", // 19. 햄스터
+    "https://files.catbox.moe/mgkpq2.mp4"  // 20. 최고의 아침식사
   ];
 
   const MODE = "scroll_online";
@@ -275,6 +275,7 @@
     if (el.requestFullscreen) el.requestFullscreen().catch(()=>{});
   });
 
+  // 모바일 비디오 로딩 및 재생 기능 대폭 보강
   function buildViewer(){
     const feed = document.getElementById("scrollFeed");
     feed.innerHTML = "";
@@ -282,18 +283,31 @@
       const item = document.createElement("div");
       item.className = "feed-item";
       const vid = document.createElement("video");
-      vid.src = v.url; vid.loop = true; vid.muted = true; vid.playsInline = true; vid.setAttribute("playsinline","");
+      vid.src = v.url; 
+      vid.loop = true; 
+      vid.muted = true; 
+      vid.playsInline = true; 
+      vid.setAttribute("playsinline","");
+      vid.setAttribute("webkit-playsinline",""); // iOS 호환성 추가
+      vid.preload = "auto"; // 미리 동영상을 불러오도록 설정
       item.appendChild(vid);
       feed.appendChild(item);
     });
     const items = feed.querySelectorAll(".feed-item video");
+    
+    // 모바일 감지 강도 최적화 (0.4 threshold)
     const io = new IntersectionObserver((entries) => {
       entries.forEach(en => {
         const v = en.target;
-        if (en.isIntersecting && en.intersectionRatio > 0.6){ v.currentTime = 0; v.play().catch(()=>{}); }
-        else v.pause();
+        if (en.isIntersecting){ 
+          v.currentTime = 0; 
+          v.play().catch(()=>{}); 
+        }
+        else {
+          v.pause();
+        }
       });
-    }, { threshold:[0,0.6,1] });
+    }, { threshold: 0.4 });
     items.forEach(v => io.observe(v));
     if (items[0]) items[0].play().catch(()=>{});
   }
